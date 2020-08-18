@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"math/rand"
 	"os"
@@ -18,20 +19,20 @@ type Transaction struct {
 	SubType     string
 	FromAccount string
 	ToAccount   string
-	Value       float64
+	Value       string
 	Time        time.Time
 	DeviceType  string
 }
 
 func (t *Transaction) line() string {
 	return fmt.Sprintf("%10s", t.Type) +
-		fmt.Sprintf("%9s", t.SubType) +
-		fmt.Sprintf("%29s", t.FromAccount) +
-		fmt.Sprintf("%29s", t.ToAccount) +
-		fmt.Sprintf("%029f", t.Value) +
+		fmt.Sprintf("%10s", t.SubType) +
+		fmt.Sprintf("%30s", t.FromAccount) +
+		fmt.Sprintf("%30s", t.ToAccount) +
 		fmt.Sprintf(DATE_PATTERN, t.Time.Year(), t.Time.Month(), t.Time.Day(),
 			t.Time.Hour(), t.Time.Minute(), t.Time.Second()) +
-		fmt.Sprintf("%29s", t.DeviceType) + "\n"
+		fmt.Sprintf("%30s", t.DeviceType) +
+		fmt.Sprintf("%30s", t.Value) + "\n"
 }
 
 type transactionBuilder struct {
@@ -39,7 +40,7 @@ type transactionBuilder struct {
 	SubType        string
 	OriginAccount  string
 	DestinyAccount string
-	TValue         float64
+	TValue         string
 	TTime          time.Time
 	Device         string
 }
@@ -64,7 +65,7 @@ func (tb *transactionBuilder) ToAccount(toAccount string) *transactionBuilder {
 	return tb
 }
 
-func (tb *transactionBuilder) Value(value float64) *transactionBuilder {
+func (tb *transactionBuilder) Value(value string) *transactionBuilder {
 	tb.TValue = value
 	return tb
 }
@@ -103,7 +104,7 @@ func MapRandomKeyGet(mapI interface{}) interface{} {
 func main() {
 	log.Printf("Starting file generator....")
 	start := time.Now()
-	f, _ := os.Create(os.Getenv("OUT_FOLDER") + time.Now().String() + ".txt")
+	f, _ := os.Create(os.Getenv("OUT_FOLDER") + uuid.New().String() + ".txt")
 	defer f.Close()
 	w := bufio.NewWriter(f)
 	defer w.Flush()
@@ -119,7 +120,10 @@ func main() {
 		pType := MapRandomKeyGet(ts).(string)
 		pSubType := ts[pType][rand.Intn(len(ts[pType]))]
 		rt := rand.Intn(to-from) + from
-		transaction := New().FromAccount(strconv.Itoa(i)).ToAccount(strconv.Itoa(rt)).PaymentType(pType).PaymentSubType(pSubType).Time(randomDate()).Value(value).DeviceType(device).Build()
+
+		vf := strconv.FormatFloat(value, 'f', 6, 64)
+
+		transaction := New().FromAccount(strconv.Itoa(i)).ToAccount(strconv.Itoa(rt)).PaymentType(pType).PaymentSubType(pSubType).Time(randomDate()).Value(vf).DeviceType(device).Build()
 		w.WriteString(transaction.line())
 	}
 	elapsed := time.Since(start)
