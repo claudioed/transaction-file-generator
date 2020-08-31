@@ -19,6 +19,8 @@ spec:
                   value: "100000"
                 - name: OUT_FOLDER
                   value: /tmp/
+                - name: FILE_NAME
+                  value: transactions
               volumeMounts:
                 - name: transaction-file-storage
                   mountPath: /tmp

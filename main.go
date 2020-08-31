@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"math/rand"
 	"os"
@@ -11,8 +10,6 @@ import (
 	"strconv"
 	"time"
 )
-
-const DATE_PATTERN = "%d-%02d-%02dT%02d:%02d:%02d-00:00"
 
 type Transaction struct {
 	Type        string
@@ -29,8 +26,7 @@ func (t *Transaction) line() string {
 		fmt.Sprintf("%10s", t.SubType) +
 		fmt.Sprintf("%30s", t.FromAccount) +
 		fmt.Sprintf("%30s", t.ToAccount) +
-		fmt.Sprintf(DATE_PATTERN, t.Time.Year(), t.Time.Month(), t.Time.Day(),
-			t.Time.Hour(), t.Time.Minute(), t.Time.Second()) +
+		fmt.Sprintf(t.Time.Format(time.RFC1123)) +
 		fmt.Sprintf("%30s", t.DeviceType) +
 		fmt.Sprintf("%30s", t.Value) + "\n"
 }
@@ -104,7 +100,7 @@ func MapRandomKeyGet(mapI interface{}) interface{} {
 func main() {
 	log.Printf("Starting file generator....")
 	start := time.Now()
-	f, _ := os.Create(os.Getenv("OUT_FOLDER") + uuid.New().String() + ".txt")
+	f, _ := os.Create(os.Getenv("OUT_FOLDER") + os.Getenv("FILE_NAME") + ".txt")
 	defer f.Close()
 	w := bufio.NewWriter(f)
 	defer w.Flush()
@@ -120,9 +116,7 @@ func main() {
 		pType := MapRandomKeyGet(ts).(string)
 		pSubType := ts[pType][rand.Intn(len(ts[pType]))]
 		rt := rand.Intn(to-from) + from
-
 		vf := strconv.FormatFloat(value, 'f', 6, 64)
-
 		transaction := New().FromAccount(strconv.Itoa(i)).ToAccount(strconv.Itoa(rt)).PaymentType(pType).PaymentSubType(pSubType).Time(randomDate()).Value(vf).DeviceType(device).Build()
 		w.WriteString(transaction.line())
 	}
